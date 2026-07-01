@@ -63,11 +63,16 @@ def list_records(token, table_id):
 
 def send_card(token, card_json):
     """Send interactive card message."""
+    content_str = json.dumps(card_json, ensure_ascii=False)
+    # Debug: print card size
+    print(f"Card JSON size: {len(content_str)} bytes", file=sys.stderr)
     r = requests.post(
         f"{BASE_URL}/im/v1/messages?receive_id_type=open_id",
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-        json={"receive_id": OPEN_ID, "msg_type": "interactive", "content": json.dumps(card_json, ensure_ascii=False)},
+        json={"receive_id": OPEN_ID, "msg_type": "interactive", "content": content_str},
         timeout=15)
+    if r.status_code != 200:
+        print(f"API Error {r.status_code}: {r.text}", file=sys.stderr)
     r.raise_for_status()
     return r.json()
 
