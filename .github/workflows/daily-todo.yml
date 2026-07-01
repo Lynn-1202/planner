@@ -1,0 +1,28 @@
+name: Daily Todo Push
+
+on:
+  schedule:
+    # 每天早上 9:00 北京时间 (UTC+8) = UTC 1:00
+    - cron: "0 1 * * *"
+  workflow_dispatch:  # 手动触发
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run daily todo
+        env:
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+          FEISHU_OPEN_ID: ${{ secrets.FEISHU_OPEN_ID }}
+        run: python daily-todo.py
