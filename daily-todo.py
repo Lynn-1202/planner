@@ -62,19 +62,19 @@ def list_records(token, table_id):
     return records
 
 def send_card(token, card_json):
-    """Send interactive card message."""
+    """Send interactive card. Returns (ok, result_dict)."""
     content_str = json.dumps(card_json, ensure_ascii=False)
-    # Debug: print card size
-    print(f"Card JSON size: {len(content_str)} bytes", file=sys.stderr)
+    print(f"[DEBUG] Card size: {len(content_str)} bytes")
     r = requests.post(
         f"{BASE_URL}/im/v1/messages?receive_id_type=open_id",
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
         json={"receive_id": OPEN_ID, "msg_type": "interactive", "content": content_str},
         timeout=15)
-    if r.status_code != 200:
-        print(f"API Error {r.status_code}: {r.text}", file=sys.stderr)
-    r.raise_for_status()
-    return r.json()
+    data = r.json()
+    ok = r.status_code == 200 and data.get("code") == 0
+    if not ok:
+        print(f"[DEBUG] Card FAILED: {r.status_code} — {data}")
+    return ok, data
 
 # ── Helpers ─────────────────────────────────────────────
 def ts_date(ms):
@@ -206,20 +206,18 @@ def main():
         ]
     }
 
-    result = send_card(token, card)
-    code = result.get("code", -1)
-    if code == 0:
-        print(f"✅ Card sent: msg_id={result.get('data',{}).get('message_id','?')}")
+    ok, result = send_card(token, card)
+    if ok:
+        print(f"Card sent: msg_id={result.get('data',{}).get('message_id','?')}")
     else:
-        print(f"❌ Send failed: {result}", file=sys.stderr)
-        # Fallback to plain text
-        print("Falling back to text message...", file=sys.stderr)
-        plain = f"{header_title}\n\n{task_md}\n\n📊 进度\n{progress_md}"
+        print("Card failed, falling back to text...")
+        plain = f"{header_title}\n\n{task_md}\n\n---\n{progress_md}"
         content = json.dumps({"text": plain}, ensure_ascii=False)
-        requests.post(
+        r = requests.post(
             f"{BASE_URL}/im/v1/messages?receive_id_type=open_id",
             headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
             json={"receive_id": OPEN_ID, "msg_type": "text", "content": content}, timeout=15)
+        print(f"Text fallback: {r.json()}")
 
 if __name__ == "__main__":
     try:
