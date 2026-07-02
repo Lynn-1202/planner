@@ -170,10 +170,15 @@ def build_progress_section(token):
 def main():
     token = get_token()
     today = datetime.now(CST)
+    # Auto-detect evening mode (runs ~23:00 Beijing = 15:00 UTC) → preview tomorrow
+    is_evening = today.hour >= 22
+    if is_evening:
+        today = today + timedelta(days=1)
     today_str = today.strftime("%m/%d")
     wday  = ["一","二","三","四","五","六","日"][today.weekday()]
     wnum  = today.isocalendar()[1]
-    header_title = f"📅 {today.month}月{today.day}日 周{wday} · 第{wnum}周"
+    prefix = "🌙 明日预览 · " if is_evening else ""
+    header_title = f"{prefix}📅 {today.month}月{today.day}日 周{wday} · 第{wnum}周"
 
     # Build card sections
     task_md     = build_task_section(token, today_str)
