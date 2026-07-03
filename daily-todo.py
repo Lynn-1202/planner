@@ -170,8 +170,8 @@ def build_progress_section(token):
 def main():
     token = get_token()
     today = datetime.now(CST)
-    # Auto-detect evening mode (runs ~23:00 Beijing = 15:00 UTC) → preview tomorrow
-    is_evening = today.hour >= 22
+    # Auto-detect evening mode (runs ~22:00 Beijing = 14:00 UTC) → preview tomorrow
+    is_evening = today.hour >= 20
     if is_evening:
         today = today + timedelta(days=1)
     today_str = today.strftime("%m/%d")
